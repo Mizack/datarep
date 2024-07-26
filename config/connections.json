@@ -1,0 +1,19 @@
+{
+    "replicated_connection": {
+        "HOST": "localhost",
+        "PORT": "5000",
+        "USER": "root",
+        "PASSWORD": "my-secret-pw",
+        "DATABASE": [],
+        "TABLE": []
+    },
+    "other_connections": [
+        {
+            "HOST": "localhost",
+            "PORT": "5001",
+            "USER": "root",
+            "PASSWORD": "my-secret-pw",
+            "DATA": false
+        }
+    ]
+}
