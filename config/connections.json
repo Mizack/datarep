@@ -5,7 +5,8 @@
         "USER": "root",
         "PASSWORD": "my-secret-pw",
         "DATABASE": [],
-        "TABLE": []
+        "TABLE": [],
+        "DBMS": "MYSQL"
     },
     "other_connections": [
         {
