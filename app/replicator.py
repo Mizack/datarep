@@ -59,4 +59,27 @@ class Replicator:
 
 
     def run(self):
-        return
+        try:
+            self.__find_databases_to_replicate()
+            self.__associate_tables_to_databases()
+            self.__replicate_databases_and_tables_to_others_connections()
+
+        except Exception as e:
+            raise ValueError(f"Error creating connection: {e}")
+    
+
+    def __find_databases_to_replicate(self):
+        self.replicated_connection.find_existing_databases()
+
+    
+    def __associate_tables_to_databases(self):
+        '''
+        Verify which tables are in database and associate it in a dict.
+        '''
+        for database in self.replicated_connection.database:
+            self.replicated_connection.find_tables_from_database(database)
+
+
+    def __replicate_databases_and_tables_to_others_connections(self):
+        for connection in self.other_connections:
+            print(connection.host)
