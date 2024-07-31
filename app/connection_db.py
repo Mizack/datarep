@@ -115,7 +115,6 @@ class Connection:
 
     def find_tables_from_database(self, database):
         database_connection = self.__create_connection(database)
-        self.table_associated_to_database[database] = []
         tables = []
 
         for table in database_connection.show_tables():
@@ -126,6 +125,33 @@ class Connection:
             raise ValueError("Not found tables")
 
         self.table_associated_to_database[database] = tables
+
+
+    def verify_if_database_exists(self, database):
+        try:
+            self.__create_connection(database)
+            return True
+        except Exception:
+            return False
+        
+
+    def create_database(self, database):
+        try:
+            database_connection = self.__create_connection()
+            database_connection.create_database(database)
+            return True
+        except Exception:
+            return False
+        
+
+    def verify_if_table_exists(self, database, table):
+        try:
+            database_connection = self.__create_connection(database)
+            
+            
+            return True
+        except Exception:
+            return False
 
 
     def __create_connection(self, database = None):

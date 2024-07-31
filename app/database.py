@@ -10,7 +10,7 @@ class Database:
         self.database_url = f"{dbms}+{driver}://{user}:{password}@{host}:{port}"
         if database:
             self.database_url = f"{self.database_url}/{database}"
-        
+
         self.create_connection()
 
 
@@ -48,6 +48,22 @@ class Database:
     def show_tables(self):
         try:
             sql = text("SHOW TABLES")
+            return self.connection.execute(sql)
+        except Exception as e:
+            raise ValueError(f"Error searching databases: {e}")
+        
+    
+    def create_database(self, database_name):
+        try:
+            sql = text(f"CREATE DATABASE {database_name}")
+            return self.connection.execute(sql)
+        except Exception as e:
+            raise ValueError(f"Error searching databases: {e}")
+        
+    
+    def find_table(self, table):
+        try:
+            sql = text(f"CREATE DATABASE {table}")
             return self.connection.execute(sql)
         except Exception as e:
             raise ValueError(f"Error searching databases: {e}")

@@ -82,4 +82,18 @@ class Replicator:
 
     def __replicate_databases_and_tables_to_others_connections(self):
         for connection in self.other_connections:
-            print(connection.host)
+            connection.dbms = self.replicated_connection.dbms
+
+            for database in self.replicated_connection.table_associated_to_database.keys():
+                self.__replicate_databases(connection, database)
+                self.__replicate_tables(connection, database)
+                
+
+    def __replicate_databases(self, connection:Connection, database:str):
+        if not connection.verify_if_database_exists(database):
+            connection.create_database(database)
+
+
+    def __replicate_tables(self, connection:Connection, database:str):
+        for table in self.replicated_connection.table_associated_to_database.get(database):
+            print(table)
