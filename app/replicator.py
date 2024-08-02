@@ -96,4 +96,17 @@ class Replicator:
 
     def __replicate_tables(self, connection:Connection, database:str):
         for table in self.replicated_connection.table_associated_to_database.get(database):
-            print(table)
+            base_structure_table = self.replicated_connection.find_structure_table(database, table)
+            structure_table = connection.find_structure_table(database, table)
+
+            if structure_table == False:
+                self.__replicate_table(connection, database, table)
+                continue
+
+            print(base_structure_table)
+            print(structure_table)
+
+    def __replicate_table(self, connection:Connection, database:str, table:str):
+        original_table_structure = self.replicated_connection.show_create_table(database, table)
+        if not connection.create_table(database, original_table_structure):
+            print("ERRO")

@@ -133,7 +133,7 @@ class Connection:
             return True
         except Exception:
             return False
-        
+
 
     def create_database(self, database):
         try:
@@ -144,12 +144,30 @@ class Connection:
             return False
         
 
-    def verify_if_table_exists(self, database, table):
+    def create_table(self, database, script_creation):
         try:
             database_connection = self.__create_connection(database)
-            
-            
+            script_creation = script_creation.replace("\n", "")
+            # print(script_creation)
+            # return True
+            database_connection.create_table(script_creation)
             return True
+        except Exception:
+            return False
+        
+
+    def find_structure_table(self, database, table):
+        try:
+            database_connection = self.__create_connection(database)
+            return database_connection.find_table(table)
+        except Exception:
+            return False
+
+    
+    def show_create_table(self, database, table):
+        try:
+            database_connection = self.__create_connection(database)
+            return database_connection.show_create_table(table)[0][1]
         except Exception:
             return False
 

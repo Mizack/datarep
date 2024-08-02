@@ -10,7 +10,8 @@ class Database:
         self.database_url = f"{dbms}+{driver}://{user}:{password}@{host}:{port}"
         if database:
             self.database_url = f"{self.database_url}/{database}"
-
+        print(self.database_url)
+        quit()
         self.create_connection()
 
 
@@ -30,7 +31,7 @@ class Database:
 
     def create_connection(self):
         try:
-            engine = create_engine(self.database_url)
+            engine = create_engine(self.database_url, echo=True)
             self.connection = engine.connect()
 
         except Exception as e:
@@ -59,11 +60,32 @@ class Database:
             return self.connection.execute(sql)
         except Exception as e:
             raise ValueError(f"Error searching databases: {e}")
+                
+    
+    def create_table(self, script_creation):
+        try:
+            sql = text(script_creation)
+            return self.connection.execute(sql)
+        except Exception as e:
+            print(e)
+            raise ValueError(f"Error searching databases: {e}")
         
     
     def find_table(self, table):
         try:
-            sql = text(f"CREATE DATABASE {table}")
-            return self.connection.execute(sql)
+            sql = text(f"DESCRIBE {table}")
+            resultado = self.connection.execute(sql)
+            
+            return resultado.fetchall()
         except Exception as e:
-            raise ValueError(f"Error searching databases: {e}")
+            raise ValueError(f"Error searching table: {e}")
+        
+    
+    def show_create_table(self, table):
+        try:
+            sql = text(f"SHOW CREATE TABLE {table}")
+            resultado = self.connection.execute(sql)
+            
+            return resultado.fetchall()
+        except Exception as e:
+            raise ValueError(f"Error searching table: {e}")
