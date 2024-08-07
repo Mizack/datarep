@@ -10,8 +10,7 @@ class Database:
         self.database_url = f"{dbms}+{driver}://{user}:{password}@{host}:{port}"
         if database:
             self.database_url = f"{self.database_url}/{database}"
-        print(self.database_url)
-        quit()
+        
         self.create_connection()
 
 
@@ -31,7 +30,7 @@ class Database:
 
     def create_connection(self):
         try:
-            engine = create_engine(self.database_url, echo=True)
+            engine = create_engine(self.database_url)
             self.connection = engine.connect()
 
         except Exception as e:

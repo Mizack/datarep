@@ -62,6 +62,7 @@ class Replicator:
         try:
             self.__find_databases_to_replicate()
             self.__associate_tables_to_databases()
+            self.__sort_tables_by_dependencies()
             self.__replicate_databases_and_tables_to_others_connections()
 
         except Exception as e:
@@ -78,6 +79,36 @@ class Replicator:
         '''
         for database in self.replicated_connection.database:
             self.replicated_connection.find_tables_from_database(database)
+
+    def __sort_tables_by_dependencies(self):
+        foreign_keys = self.__get_foreign_keys()
+
+        for database in foreign_keys:
+            sorted_tables = []
+            for table, deps in list(foreign_keys[database].items()):
+                if not deps or all(dep in sorted_tables for dep in deps):
+                    sorted_tables.append(table)
+                    del foreign_keys[database][table]
+        print(sorted_tables)
+
+    
+    def __get_foreign_keys(self):
+        foreign_keys = {}
+        
+        for database in self.replicated_connection.table_associated_to_database:
+            foreign_keys[database] = {}
+            for table in self.replicated_connection.table_associated_to_database[database]:
+                table_structure = self.replicated_connection.show_create_table(database, table)
+                table_foreign_keys = []
+
+                for line in table_structure.split('\n'):
+                    if 'FOREIGN KEY' in line:
+                        fk_table = line.split('REFERENCES ')[1].split(' ')[0].strip('`')
+                        table_foreign_keys.append(fk_table)
+                
+                foreign_keys[database][table] = table_foreign_keys
+        
+        return foreign_keys
 
 
     def __replicate_databases_and_tables_to_others_connections(self):
@@ -99,14 +130,19 @@ class Replicator:
             base_structure_table = self.replicated_connection.find_structure_table(database, table)
             structure_table = connection.find_structure_table(database, table)
 
+            # print(base_structure_table)
+            # print(structure_table)
             if structure_table == False:
                 self.__replicate_table(connection, database, table)
                 continue
 
-            print(base_structure_table)
-            print(structure_table)
+            # print(base_structure_table)
+            # print(structure_table)
 
     def __replicate_table(self, connection:Connection, database:str, table:str):
         original_table_structure = self.replicated_connection.show_create_table(database, table)
+        # print("\n")
+        # print(original_table_structure)
+        return True
         if not connection.create_table(database, original_table_structure):
             print("ERRO")
