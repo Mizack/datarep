@@ -66,8 +66,15 @@ class Database:
             sql = text(script_creation)
             return self.connection.execute(sql)
         except Exception as e:
-            print(e)
-            raise ValueError(f"Error searching databases: {e}")
+            raise ValueError(f"Error creating databases: {e}")
+                
+    
+    def add_column(self, table, column):
+        try:
+            sql = text(f"ALTER TABLE {table} ADD COLUMN {column}")
+            return self.connection.execute(sql)
+        except Exception as e:
+            raise ValueError(f"Error creating databases: {e}")
         
     
     def find_table(self, table):

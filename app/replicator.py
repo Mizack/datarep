@@ -80,16 +80,22 @@ class Replicator:
         for database in self.replicated_connection.database:
             self.replicated_connection.find_tables_from_database(database)
 
+
     def __sort_tables_by_dependencies(self):
+        '''
+        Sort tables by your foreign keys.
+        '''
         foreign_keys = self.__get_foreign_keys()
 
         for database in foreign_keys:
             sorted_tables = []
-            for table, deps in list(foreign_keys[database].items()):
-                if not deps or all(dep in sorted_tables for dep in deps):
+            for table, fks in list(foreign_keys[database].items()):
+                if not fks:
+                    sorted_tables.insert(0, table)
+                else:
                     sorted_tables.append(table)
-                    del foreign_keys[database][table]
-        print(sorted_tables)
+            
+            self.replicated_connection.table_associated_to_database[database] = sorted_tables
 
     
     def __get_foreign_keys(self):
@@ -130,19 +136,45 @@ class Replicator:
             base_structure_table = self.replicated_connection.find_structure_table(database, table)
             structure_table = connection.find_structure_table(database, table)
 
-            # print(base_structure_table)
-            # print(structure_table)
             if structure_table == False:
                 self.__replicate_table(connection, database, table)
                 continue
 
-            # print(base_structure_table)
-            # print(structure_table)
+            base_structure_table = {column[0:]: column for column in base_structure_table}
+            structure_table = {column[0:]: column for column in structure_table}
+
+            self.__add_missing_columns(table, base_structure_table, structure_table)
+
 
     def __replicate_table(self, connection:Connection, database:str, table:str):
         original_table_structure = self.replicated_connection.show_create_table(database, table)
-        # print("\n")
-        # print(original_table_structure)
-        return True
         if not connection.create_table(database, original_table_structure):
             print("ERRO")
+
+
+    def __add_missing_columns(self, table, base_structure_table:dict, structure_table:dict):
+        missing_columns = set(base_structure_table.keys()) - set(structure_table.keys())
+        for coluna in missing_columns:
+            null_column = "" if coluna[2] == "YES" else "NOT NULL"
+            default = "" if coluna[4] == None else f"DEFAULT '{coluna[4]}'"
+            extra = "" if not coluna[5] else f"{coluna[5]}"
+
+            print(coluna)
+            print(f"{coluna[0]} {coluna[1]} {default} {null_column} {extra}")
+            # print(' '.join(coluna))
+
+    # def __replicate_foreign_key(self, )
+    """
+    SELECT 
+    CONSTRAINT_NAME, 
+    TABLE_NAME, 
+    COLUMN_NAME, 
+    REFERENCED_TABLE_NAME, 
+    REFERENCED_COLUMN_NAME 
+FROM 
+    INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+WHERE 
+    TABLE_NAME = 'endereco'
+    AND COLUMN_NAME = 'ID_USUARIO'
+    AND REFERENCED_TABLE_NAME IS NOT NULL
+    """

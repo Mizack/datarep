@@ -9,7 +9,6 @@ class Connection:
         self.user = data_connection.get("USER")
         self.password = data_connection.get("PASSWORD")
         self.database = data_connection.get("DATABASE")
-        self.table = data_connection.get("TABLE")
         self.data = data_connection.get("DATA", False)
         self.dbms = data_connection.get("DBMS")
 
@@ -57,15 +56,6 @@ class Connection:
     @database.setter
     def database(self, database:list):
         self._database = database
-
-    
-    @property
-    def table(self) -> list:
-        return self._table
-
-    @table.setter
-    def table(self, table:list):
-        self._table = table
 
     
     @property
@@ -118,8 +108,7 @@ class Connection:
         tables = []
 
         for table in database_connection.show_tables():
-            if len(self.table) == 0 or table in self.table:
-                tables.append(table[0])
+            tables.append(table[0])
         
         if len(tables) == 0:
             raise ValueError("Not found tables")
@@ -147,10 +136,16 @@ class Connection:
     def create_table(self, database, script_creation):
         try:
             database_connection = self.__create_connection(database)
-            script_creation = script_creation.replace("\n", "")
-            # print(script_creation)
-            # return True
-            database_connection.create_table(script_creation)
+            database_connection.create_table(f"""{script_creation}""")
+            return True
+        except Exception:
+            return False
+        
+
+    def add_column(self, database, table, column):
+        try:
+            database_connection = self.__create_connection(database)
+            database_connection.add_column(table, column)
             return True
         except Exception:
             return False

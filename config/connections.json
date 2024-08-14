@@ -5,7 +5,6 @@
         "USER": "root",
         "PASSWORD": "my-secret-pw",
         "DATABASE": [],
-        "TABLE": [],
         "DBMS": "MYSQL"
     },
     "other_connections": [
