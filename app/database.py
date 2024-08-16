@@ -86,6 +86,31 @@ class Database:
         except Exception as e:
             raise ValueError(f"Error searching table: {e}")
         
+
+    def describe_constraint_for_column(self, table, column):
+        try:
+            sql = text("""
+                SELECT 
+                    CONSTRAINT_NAME, 
+                    TABLE_NAME, 
+                    COLUMN_NAME, 
+                    REFERENCED_TABLE_NAME, 
+                    REFERENCED_COLUMN_NAME 
+                FROM 
+                    INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                WHERE 
+                    TABLE_NAME = :table
+                    AND COLUMN_NAME = :column
+                    AND REFERENCED_TABLE_NAME IS NOT NULL
+            """)
+            resultado = self.connection.execute(sql, {
+                "table": table,
+                "column": column
+            })
+            
+            return resultado.fetchone()
+        except Exception as e:
+            raise ValueError(f"Error searching table: {e}")
     
     def show_create_table(self, table):
         try:

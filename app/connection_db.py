@@ -151,6 +151,14 @@ class Connection:
             return False
         
 
+    def find_constraint_for_table(self, database, table, column):
+        try:
+            database_connection = self.__create_connection(database)
+            return database_connection.describe_constraint_for_column(table, column)
+        except Exception:
+            return False
+        
+
     def find_structure_table(self, database, table):
         try:
             database_connection = self.__create_connection(database)

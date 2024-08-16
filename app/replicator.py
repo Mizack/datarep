@@ -143,7 +143,8 @@ class Replicator:
             base_structure_table = {column[0:]: column for column in base_structure_table}
             structure_table = {column[0:]: column for column in structure_table}
 
-            self.__add_missing_columns(table, base_structure_table, structure_table)
+            self.__add_missing_columns(database, table, base_structure_table, structure_table, connection)
+            self.__remove_remaining_columns(database, table, base_structure_table, structure_table, connection)
 
 
     def __replicate_table(self, connection:Connection, database:str, table:str):
@@ -152,29 +153,29 @@ class Replicator:
             print("ERRO")
 
 
-    def __add_missing_columns(self, table, base_structure_table:dict, structure_table:dict):
+    def __add_missing_columns(self, database, table, base_structure_table:dict, structure_table:dict, connection:Connection):
         missing_columns = set(base_structure_table.keys()) - set(structure_table.keys())
-        for coluna in missing_columns:
-            null_column = "" if coluna[2] == "YES" else "NOT NULL"
-            default = "" if coluna[4] == None else f"DEFAULT '{coluna[4]}'"
-            extra = "" if not coluna[5] else f"{coluna[5]}"
+        columns_to_add_constraints = []
 
-            print(coluna)
-            print(f"{coluna[0]} {coluna[1]} {default} {null_column} {extra}")
-            # print(' '.join(coluna))
+        for column in missing_columns:
+            null_column = "" if column[2] == "YES" else "NOT NULL"
+            default = "" if column[4] == None else f"DEFAULT '{column[4]}'"
+            extra = "" if not column[5] else f"{column[5]}"
 
-    # def __replicate_foreign_key(self, )
-    """
-    SELECT 
-    CONSTRAINT_NAME, 
-    TABLE_NAME, 
-    COLUMN_NAME, 
-    REFERENCED_TABLE_NAME, 
-    REFERENCED_COLUMN_NAME 
-FROM 
-    INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-WHERE 
-    TABLE_NAME = 'endereco'
-    AND COLUMN_NAME = 'ID_USUARIO'
-    AND REFERENCED_TABLE_NAME IS NOT NULL
-    """
+            describe_column = f"{column[0]} {column[1]} {default} {null_column} {extra}"
+            connection.add_column(database, table, describe_column)
+
+            if column[3]:
+                columns_to_add_constraints.append(column[0])
+        
+        self.__replicate_constraints(database, table, connection, columns_to_add_constraints)
+        
+
+    def __replicate_constraints(self, database, table, connection:Connection, columns_to_add_constraints):
+        for column in columns_to_add_constraints:
+            describe_constraint = self.replicated_connection.find_constraint_for_table(database, table, column)
+            print(describe_constraint)
+        pass
+
+    def __remove_remaining_columns(self, database, table, base_structure_table:dict, structure_table:dict, connection:Connection):
+        pass
