@@ -91,24 +91,39 @@ class Database:
         try:
             sql = text("""
                 SELECT 
-                    CONSTRAINT_NAME, 
-                    TABLE_NAME, 
-                    COLUMN_NAME, 
-                    REFERENCED_TABLE_NAME, 
-                    REFERENCED_COLUMN_NAME 
+                    kcu.CONSTRAINT_NAME, 
+                    kcu.TABLE_NAME, 
+                    kcu.COLUMN_NAME, 
+                    kcu.REFERENCED_TABLE_NAME, 
+                    kcu.REFERENCED_COLUMN_NAME,
+                    rc.UPDATE_RULE AS ON_UPDATE,
+                    rc.DELETE_RULE AS ON_DELETE,
+                    tc.CONSTRAINT_TYPE
                 FROM 
-                    INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                    INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu
+                LEFT JOIN
+                    INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
+                ON 
+                    kcu.CONSTRAINT_NAME = rc.CONSTRAINT_NAME
+                    AND kcu.TABLE_NAME = rc.TABLE_NAME
+                JOIN
+                    INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+                ON 
+                    kcu.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
+                    AND kcu.TABLE_NAME = tc.TABLE_NAME
                 WHERE 
-                    TABLE_NAME = :table
-                    AND COLUMN_NAME = :column
-                    AND REFERENCED_TABLE_NAME IS NOT NULL
+                    kcu.TABLE_NAME = :table
+                    AND kcu.COLUMN_NAME = :column
+                ORDER BY 
+                    kcu.CONSTRAINT_NAME,
+                    kcu.ORDINAL_POSITION
             """)
             resultado = self.connection.execute(sql, {
                 "table": table,
                 "column": column
             })
             
-            return resultado.fetchone()
+            return resultado.fetchall()
         except Exception as e:
             raise ValueError(f"Error searching table: {e}")
     

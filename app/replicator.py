@@ -163,7 +163,7 @@ class Replicator:
             extra = "" if not column[5] else f"{column[5]}"
 
             describe_column = f"{column[0]} {column[1]} {default} {null_column} {extra}"
-            connection.add_column(database, table, describe_column)
+            # connection.add_column(database, table, describe_column)
 
             if column[3]:
                 columns_to_add_constraints.append(column[0])
@@ -174,8 +174,31 @@ class Replicator:
     def __replicate_constraints(self, database, table, connection:Connection, columns_to_add_constraints):
         for column in columns_to_add_constraints:
             describe_constraint = self.replicated_connection.find_constraint_for_table(database, table, column)
-            print(describe_constraint)
-        pass
+            syntax_constraint = self.__generate_syntax_constraint(describe_constraint)
+            # print(describe_constraint)
+            print(syntax_constraint)
+
+
+    def __generate_syntax_constraint(self, constraint_description:list):
+        constraint_type = constraint_description[0][7]
+        syntax_constraint = False
+
+        if constraint_type == "FOREIGN KEY":
+            syntax_constraint = f"""
+                ALTER TABLE {constraint_description[0][1]}
+                ADD CONSTRAINT {constraint_description[0][0]}
+                FOREIGN KEY ({constraint_description[0][2]}) REFERENCES {constraint_description[0][3]}({constraint_description[0][4]})
+                ON DELETE {constraint_description[0][6]}
+                ON UPDATE {constraint_description[0][5]}
+            """
+        elif constraint_type == "PRIMARY KEY":
+            keys = []
+            for pk in constraint_description:
+                keys.append(pk[2])
+            syntax_constraint = f"ALTER TABLE {constraint_description[0][1]} ADD PRIMARY KEY ( {', '.join(keys)})"
+                
+
+        return syntax_constraint
 
     def __remove_remaining_columns(self, database, table, base_structure_table:dict, structure_table:dict, connection:Connection):
         pass
