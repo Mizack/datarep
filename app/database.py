@@ -75,8 +75,24 @@ class Database:
             return self.connection.execute(sql)
         except Exception as e:
             raise ValueError(f"Error creating databases: {e}")
+    
+
+    def modify_constraint(self, table, constraint):
+        try:
+            sql = text(f"ALTER TABLE {table} {constraint}")
+            return self.connection.execute(sql)
+        except Exception as e:
+            raise ValueError(f"Error creating databases: {e}")
         
     
+    def drop_column(self, table, column):
+        try:
+            sql = text(f"ALTER TABLE {table} DROP COLUMN {column}")
+            return self.connection.execute(sql)
+        except Exception as e:
+            raise ValueError(f"Error creating databases: {e}")
+    
+
     def find_table(self, table):
         try:
             sql = text(f"DESCRIBE {table}")

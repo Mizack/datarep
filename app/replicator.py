@@ -163,7 +163,7 @@ class Replicator:
             extra = "" if not column[5] else f"{column[5]}"
 
             describe_column = f"{column[0]} {column[1]} {default} {null_column} {extra}"
-            # connection.add_column(database, table, describe_column)
+            connection.add_column(database, table, describe_column)
 
             if column[3]:
                 columns_to_add_constraints.append(column[0])
@@ -175,8 +175,7 @@ class Replicator:
         for column in columns_to_add_constraints:
             describe_constraint = self.replicated_connection.find_constraint_for_table(database, table, column)
             syntax_constraint = self.__generate_syntax_constraint(describe_constraint)
-            # print(describe_constraint)
-            print(syntax_constraint)
+            self.__add_constraint(connection, database, table, syntax_constraint)
 
 
     def __generate_syntax_constraint(self, constraint_description:list):
@@ -185,7 +184,6 @@ class Replicator:
 
         if constraint_type == "FOREIGN KEY":
             syntax_constraint = f"""
-                ALTER TABLE {constraint_description[0][1]}
                 ADD CONSTRAINT {constraint_description[0][0]}
                 FOREIGN KEY ({constraint_description[0][2]}) REFERENCES {constraint_description[0][3]}({constraint_description[0][4]})
                 ON DELETE {constraint_description[0][6]}
@@ -195,10 +193,43 @@ class Replicator:
             keys = []
             for pk in constraint_description:
                 keys.append(pk[2])
-            syntax_constraint = f"ALTER TABLE {constraint_description[0][1]} ADD PRIMARY KEY ( {', '.join(keys)})"
-                
+            syntax_constraint = f"ADD PRIMARY KEY ( {', '.join(keys)})"
+        elif constraint_type == "UNIQUE":
+            keys = []
+            for unique in constraint_description:
+                keys.append(unique[2])
+            syntax_constraint = f"ADD CONSTRAINT {constraint_description[0][2]} UNIQUE ({', '.join(keys)})"
 
         return syntax_constraint
+    
+
+    def __add_constraint(self, connection:Connection, database, table, column):
+        connection.modify_constraint(database, table, column)
+
 
     def __remove_remaining_columns(self, database, table, base_structure_table:dict, structure_table:dict, connection:Connection):
-        pass
+        remaining_columns = set(structure_table.keys()) - set(base_structure_table.keys())
+
+        for column in remaining_columns:
+            connection.drop_column(database, table, column[0])
+            if column[3]:
+                describe_constraint = self.replicated_connection.find_constraint_for_table(database, table, column)
+                self.__drop_constraint(connection, database, table, describe_constraint)
+    
+
+    def __drop_constraint(self, connection:Connection, database, table, constraint_description):
+        constraint_type = constraint_description[7]
+        syntax_constraint = False
+
+        if constraint_type == "FOREIGN KEY":
+            syntax_constraint = f"""
+                DROP FOREIGN KEY {constraint_description[0]}
+            """
+        elif constraint_type == "PRIMARY KEY":
+            syntax_constraint = """DROP PRIMARY KEY"""
+        elif constraint_type == "UNIQUE":
+            syntax_constraint = f"""
+                DROP INDEX {constraint_description[0]}
+            """
+
+        connection.modify_constraint(database, table, syntax_constraint)

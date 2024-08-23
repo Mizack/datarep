@@ -149,6 +149,24 @@ class Connection:
             return True
         except Exception:
             return False
+
+
+    def modify_constraint(self, database, table, constraint):
+        try:
+            database_connection = self.__create_connection(database)
+            database_connection.modify_constraint(table, constraint)
+            return True
+        except Exception:
+            return False
+
+
+    def drop_column(self, database, table, column):
+        try:
+            database_connection = self.__create_connection(database)
+            database_connection.drop_column(table, column)
+            return True
+        except Exception:
+            return False
         
 
     def find_constraint_for_table(self, database, table, column):
